@@ -1,31 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  engineType      = "library"
+  // output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "mysql"
-  
+  provider = "postgres"
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  email     String   @unique
-  name      String?
-  role      Role     @default(USER)
-  todos     Todo[]
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String    
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  todos        Todo[]
+  profile      Profile? 
 }
+
+model Profile {
+  id          String   @id @default(cuid())
+  bio         String?  @db.Text
+  avatarUrl   String?
+  displayName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String   @unique
+
+  @@index([userId])    
+}
+
 model Todo {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String   @db.VarChar(255)
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
-}
-enum Role {
-  USER
-  ADMIN
+  id          String   @id @default(cuid())
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  completed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
