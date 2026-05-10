@@ -1,20 +1,10 @@
-import { prisma } from "../lib/prisma.js";
+import * as profileService from "../services/profileService.js";
 
 class ProfileController {
   static async getProfile(req, res) {
     try {
       const userId = req.user.id;
-
-      const profile = await prisma.profile.findUnique({
-        where: { userId: userId },
-      });
-
-      if (!profile) {
-        return res.status(404).json({
-          user: userId,
-          error: "profile not found",
-        });
-      }
+      const profile = await profileService.getProfileByUserId(userId);
 
       res.status(200).json({
         message: "Get user profile",
@@ -22,7 +12,7 @@ class ProfileController {
         data: profile,
       });
     } catch (error) {
-      res.status(500).json({
+      res.status(error.statusCode || 500).json({
         error: error.message,
       });
     }
@@ -33,14 +23,14 @@ class ProfileController {
       const userId = req.user.id;
       const { avatarUrl, displayName, bio } = req.body;
 
-      const updatedProfile = await prisma.profile.update({
-        where: { userId: userId },
-        data: {
+      const updatedProfile = await profileService.updateProfileByUserId(
+        userId,
+        {
           avatarUrl,
-          bio,
           displayName,
+          bio,
         },
-      });
+      );
 
       res.status(200).json({
         message: "Profile updated successfully",
@@ -48,13 +38,8 @@ class ProfileController {
         data: updatedProfile,
       });
     } catch (error) {
-      if (error.code === "P2025") {
-        return res.status(404).json({ error: "Profile not found" });
-      }
-
-      res.status(500).json({
-        error: "Internal server error",
-        details: error.message,
+      res.status(error.statusCode || 500).json({
+        error: error.message || "Internal server error",
       });
     }
   }
