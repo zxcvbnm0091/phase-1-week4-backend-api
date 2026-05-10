@@ -62,7 +62,6 @@ const login = async (req, res) => {
 
     const user = await prisma.user.findUnique({ where: { email } });
 
-    // Stay consistent: use 401 for both to prevent user enumeration
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
@@ -90,7 +89,7 @@ const logout = (req, res) => {
 
 const deleteUser = async (req, res) => {
   const userId = req.user.id;
-  console.log("User Id", userId);
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });

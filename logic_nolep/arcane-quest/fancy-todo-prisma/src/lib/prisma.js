@@ -8,9 +8,9 @@ if (!process.env.DATABASE_URL) {
 }
 
 const connectionString = `${process.env.DATABASE_URL}`;
-// 1. Create the pg pool first
+
 const pool = new pg.Pool({ connectionString });
-// 2. Pass the pool into the adapter
+
 const adapter = new PrismaPg(pool);
 
 const globalForPrisma = global;
@@ -27,8 +27,6 @@ const prisma =
 
 const connectDB = async () => {
   try {
-    // Note: $connect is technically optional as Prisma connects lazily,
-    // but it's good for checking connectivity on startup.
     await prisma.$connect();
     console.log("🟢 DB Connected Via Prisma");
   } catch (error) {
