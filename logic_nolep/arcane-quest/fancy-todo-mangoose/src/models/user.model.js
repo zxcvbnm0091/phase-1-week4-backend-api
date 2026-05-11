@@ -1,4 +1,5 @@
-import { Schema, model, models } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
+import { z } from "zod";
 
 const UserSchema = new Schema(
   {
@@ -8,10 +9,12 @@ const UserSchema = new Schema(
       unique: true,
       trim: true,
       lowercase: true,
+      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address"],
     },
     passwordHash: {
       type: String,
       required: true,
+      select: false,
     },
   },
   {
@@ -29,8 +32,6 @@ UserSchema.virtual("profile", {
 });
 
 // Middleware for Cascade Delete
-// Note: In modern Mongoose, use 'deleteOne' instead of 'remove'
-// if you are calling user.deleteOne()
 UserSchema.pre(
   "deleteOne",
   { document: true, query: false },
@@ -39,11 +40,15 @@ UserSchema.pre(
     // Dynamic imports or model calls to avoid circular dependencies
     await model("Todo").deleteMany({ userId });
     await model("Profile").deleteOne({ userId });
-    next();
   },
 );
 
-// Check if model exists to prevent re-compilation errors in dev (especially Next.js)
-const User = models.User || model("User", UserSchema);
+const User = mongoose.models?.User || model("User", UserSchema);
+
+// Zod Schema
+export const UserZodSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
 
 export default User;
