@@ -1,4 +1,4 @@
-import { Schema, model, models } from "mongoose";
+import mongoose, { Schema, model } from "mongoose";
 
 const TodoSchema = new Schema(
   {
@@ -26,6 +26,6 @@ const TodoSchema = new Schema(
   },
 );
 
-const Todo = models.Todo || model("Todo", TodoSchema);
+const Todo = mongoose.models?.Todo || model("Todo", TodoSchema);
 
 export default Todo;
