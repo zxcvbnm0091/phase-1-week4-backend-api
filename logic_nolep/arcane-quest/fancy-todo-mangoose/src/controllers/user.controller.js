@@ -31,9 +31,9 @@ class UserController {
   }
 
   static async updateUser(req, res) {
-    const { email, password } = req.body;
-    const userId = req.user.id;
     try {
+      const { email, password } = req.body;
+      const userId = req.user.id;
       const updateUser = await userService.updateUser(userId, email, password);
 
       res.status(200).json({
@@ -49,9 +49,8 @@ class UserController {
   }
 
   static async deleteUser(req, res) {
-    const userId = req.user.id;
-
     try {
+      const userId = req.user.id;
       await userService.removeUser(userId);
 
       res.clearCookie("token", {

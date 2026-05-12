@@ -6,10 +6,9 @@ import { UserZodSchema } from "../models/user.model.js";
 
 class AuthController {
   static async register(req, res) {
-    const validatedData = UserZodSchema.parse(req.body);
-    const { email, password } = req.body;
-
     try {
+      const validatedData = UserZodSchema.parse(req.body);
+      const { email, password } = req.body;
       const newUser = await createUser(email, password);
 
       const jwtToken = sendTokenResponse(newUser, 201, res);
@@ -28,10 +27,9 @@ class AuthController {
   }
 
   static async login(req, res) {
-    const validatedData = UserZodSchema.parse(req.body);
-    const { email, password } = req.body;
-
     try {
+      const validatedData = UserZodSchema.parse(req.body);
+      const { email, password } = req.body;
       const user = await authService.verifyUser({ email, password });
 
       const jwtToken = sendTokenResponse(user, 200, res);

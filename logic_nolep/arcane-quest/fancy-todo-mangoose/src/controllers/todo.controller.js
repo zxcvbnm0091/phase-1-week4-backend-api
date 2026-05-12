@@ -2,10 +2,9 @@ import * as todoService from "../service/todo.service.js";
 
 class TodoController {
   static async getAll(req, res) {
-    const userId = req.user.id;
-    const todos = await todoService.findAll(userId);
-
     try {
+      const userId = req.user.id;
+      const todos = await todoService.findAll(userId);
       res.status(200).json({
         status: "success",
         count: todos.length,
@@ -18,10 +17,9 @@ class TodoController {
   }
 
   static async getById(req, res) {
-    const { id } = req.params;
-    const userId = req.user.id;
-
     try {
+      const { id } = req.params;
+      const userId = req.user.id;
       const todo = await todoService.findById(id, userId);
 
       if (!todo) {
@@ -36,20 +34,19 @@ class TodoController {
   }
 
   static async create(req, res) {
-    const userId = req.user.id;
-    const { title, description, completed } = req.body;
-
-    if (!title || typeof title !== "string" || title.trim().length === 0) {
-      return res
-        .status(400)
-        .json({ error: "Title is required and must be a non-empty string" });
-    }
-
-    if (completed !== undefined && typeof completed !== "boolean") {
-      return res.status(400).json({ error: "Completed must be a boolean" });
-    }
-
     try {
+      const userId = req.user.id;
+      const { title, description, completed } = req.body;
+
+      if (!title || typeof title !== "string" || title.trim().length === 0) {
+        return res
+          .status(400)
+          .json({ error: "Title is required and must be a non-empty string" });
+      }
+
+      if (completed !== undefined && typeof completed !== "boolean") {
+        return res.status(400).json({ error: "Completed must be a boolean" });
+      }
       const createdTodo = await todoService.createTodo(
         userId,
         title,
