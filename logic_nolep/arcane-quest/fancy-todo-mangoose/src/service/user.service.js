@@ -68,7 +68,7 @@ const updateUser = async (id, email, password) => {
   }
 
   const updatedUser = await User.findByIdAndUpdate(id, updateData, {
-    new: true,
+    returnDocument: "after",
     runValidators: true,
   });
 

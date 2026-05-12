@@ -27,7 +27,7 @@ const updateTodo = async (todoId, userId, title, description, completed) => {
       userId: userId,
     },
     { title, description, completed },
-    { new: true, runValidators: true },
+    { returnDocument: "after", runValidators: true },
   );
 
   if (!updatedTodo) {
