@@ -1,11 +1,11 @@
 import User from "../models/profile.model.js";
 import * as profileService from "../service/profile.service.js";
+import { ProfileZodSchema } from "../models/profile.model.js";
 
 class ProfileController {
   static async getProfile(req, res) {
-    const userId = req.user.id;
-
     try {
+      const userId = req.user.id;
       const profile = await profileService.findById(userId);
 
       res.status(200).json({
@@ -19,9 +19,10 @@ class ProfileController {
     }
   }
   static async updateProfile(req, res) {
-    const userId = req.user.id;
-    const { displayName, bio } = req.body;
     try {
+      const validateData = ProfileZodSchema.parse(req.body);
+      const userId = req.user.id;
+      const { displayName, bio } = validateData;
       const profile = await profileService.updateProfile(
         userId,
         displayName,

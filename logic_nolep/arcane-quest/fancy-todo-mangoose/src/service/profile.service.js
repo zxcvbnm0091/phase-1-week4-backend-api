@@ -17,7 +17,7 @@ const updateProfile = async (userId, displayName, bio) => {
     { userId: userId },
     updateData,
     {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     },
   );
@@ -30,3 +30,5 @@ const updateProfile = async (userId, displayName, bio) => {
 
   return updateProfile;
 };
+
+export { findById, updateProfile };
