@@ -1,11 +1,10 @@
 import { prisma } from "../lib/prisma";
 import { Prisma } from "../generated/prisma/client";
 import bcrypt from "bcryptjs";
-import { UpdateUserSchema } from "../dtos/user.dto";
+import type { CreateUserDto, UpdateUserDto } from "../dtos/user.dto";
 
-class AuthorizationError extends Error {
+class AppError extends Error {
   statusCode: number;
-
   constructor(message: string, statusCode: number) {
     super(message);
     this.statusCode = statusCode;
@@ -21,7 +20,13 @@ const hash = async (password: string) => {
 
 const getAll = async () => {
   return await prisma.user.findMany({
-    select: {},
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      createdAt: true,
+    },
   });
 };
 
@@ -31,30 +36,22 @@ const getById = async (userId: string) => {
   });
 
   if (!user) {
-    throw new AuthorizationError("User Not Found", 404);
+    throw new AppError("User Not Found", 404);
   }
 
   return user;
 };
 
-interface User {
-  name: string;
-  email: string;
-  password: string;
-  role: string;
-}
-
-const create = async (data: User) => {
+const create = async (dto: CreateUserDto) => {
   const existingUser = await prisma.user.findUnique({
-    where: { email: data.email },
+    where: { email: dto.email },
   });
 
   if (existingUser) {
-    throw new AuthorizationError("User already exists", 409);
+    throw new AppError("User already exists", 409);
   }
 
-  const salt = await bcrypt.genSalt(10);
-  const passwordHash = await bcrypt.hash(data.password, salt);
+  const passwordHash = await hash(dto.password);
 
   const userSelect: Prisma.UserSelect = {
     id: true,
@@ -64,10 +61,10 @@ const create = async (data: User) => {
 
   const newUser = await prisma.user.create({
     data: {
-      name: data.name,
-      email: data.email,
+      name: dto.name,
+      email: dto.email,
+      role: dto.role,
       password: passwordHash,
-      role: data.role,
     },
     select: userSelect,
   });
@@ -75,36 +72,30 @@ const create = async (data: User) => {
   return newUser;
 };
 
-const update = async (userId: string, rawData: unknown) => {
-  const validateData = UpdateUserSchema.parse(rawData);
-
+const update = async (userId: string, dto: UpdateUserDto) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
-    throw new AuthorizationError("User not found", 404);
+    throw new AppError("User not found", 404);
   }
 
-  if (validateData.password) {
-    validateData.password = await hash(validateData.password);
+  const data = { ...dto };
+
+  if (data.password) {
+    data.password = await hash(data.password);
   }
 
   const updateUser = await prisma.user.update({
     where: { id: userId },
-    data: validateData,
+    data: data,
+    select: { id: true, name: true, email: true, role: true },
   });
 
   return updateUser;
 };
 
 const remove = async (userId: string) => {
-  const user = await getById(userId);
-
-  if (!user) {
-    throw new AuthorizationError("User not found", 404);
-  }
-
-  return await prisma.user.delete({
-    where: { id: userId },
-  });
+  await getById(userId);
+  return prisma.user.delete({ where: { id: userId } });
 };
 
 export { getAll, getById, create, update, remove };
