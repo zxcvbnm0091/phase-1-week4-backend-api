@@ -2,14 +2,7 @@ import { prisma } from "../lib/prisma";
 import { Prisma } from "../generated/prisma/client";
 import bcrypt from "bcryptjs";
 import type { CreateUserDto, UpdateUserDto } from "../dtos/user.dto";
-
-class AppError extends Error {
-  statusCode: number;
-  constructor(message: string, statusCode: number) {
-    super(message);
-    this.statusCode = statusCode;
-  }
-}
+import AppError from "../utils/AppError";
 
 const hash = async (password: string) => {
   const salt = await bcrypt.genSalt(10);
