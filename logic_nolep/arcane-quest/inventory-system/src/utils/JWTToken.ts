@@ -6,6 +6,8 @@ const getMilliseconds = (timeStr: string): number => {
   const unit = timeStr.slice(-1);
   const value = parseInt(timeStr);
 
+  if (isNaN(value)) return 0;
+
   const msMap: Record<string, number> = {
     d: 24 * 60 * 60 * 1000,
     h: 60 * 60 * 1000,
