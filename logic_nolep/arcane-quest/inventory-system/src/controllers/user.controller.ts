@@ -1,6 +1,5 @@
 import * as userService from "../service/user.service";
 import type { Request, Response } from "express";
-import { CreateUserSchema, UpdateUserSchema } from "../dtos/user.dto";
 import type { CreateUserDto, UpdateUserDto } from "../dtos/user.dto";
 
 class UserController {
