@@ -1,6 +1,7 @@
 import * as userService from "../service/user.service";
 import type { Request, Response } from "express";
 import { CreateUserSchema, UpdateUserSchema } from "../dtos/user.dto";
+import type { CreateUserDto, UpdateUserDto } from "../dtos/user.dto";
 
 class UserController {
   static async getAllUser(req: Request, res: Response) {
@@ -22,10 +23,8 @@ class UserController {
 
   static async getUserById(req: Request, res: Response) {
     try {
-      const userId = Array.isArray(req.params.id)
-        ? req.params.id[0]
-        : req.params.id;
-      const user = await userService.getById(userId);
+      const { id } = req.params as { id: string };
+      const user = await userService.getById(id);
 
       res.status(200).json({
         message: "Fetch user",
@@ -41,35 +40,23 @@ class UserController {
 
   static async createUser(req: Request, res: Response) {
     try {
-      const parsed = CreateUserSchema.safeParse(req.body);
-
-      if (!parsed.success) {
-        return res.status(400).json(parsed.error);
-      }
-
-      const newUser = await userService.create(parsed.data);
-
-      res.status(201).json({
-        message: "User created",
-        success: true,
-        data: newUser,
-      });
+      const newUser = await userService.create(req.body as CreateUserDto);
+      res
+        .status(201)
+        .json({ message: "User created", success: true, data: newUser });
     } catch (error: any) {
-      res.status(error.statusCode ?? 500).json({
-        error: error.message,
-      });
+      res.status(error.statusCode ?? 500).json({ error: error.message });
     }
   }
 
   static async updateUser(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
-      const parsed = UpdateUserSchema.safeParse(req.body);
-      const updateUser = await userService.update(userId, parsed.data);
 
-      if (!parsed.success) {
-        return res.status(400).json(parsed.error);
-      }
+      const updateUser = await userService.update(
+        userId,
+        req.body as UpdateUserDto,
+      );
 
       res.status(200).json({
         message: "Used data updated",
