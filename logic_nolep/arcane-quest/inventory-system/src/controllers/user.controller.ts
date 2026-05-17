@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import type { CreateUserDto, UpdateUserDto } from "../dtos/user.dto";
 
 class UserController {
+  // GET ALL USERS
   static async getAllUser(req: Request, res: Response) {
     try {
       const users = await userService.getAll();
@@ -20,6 +21,7 @@ class UserController {
     }
   }
 
+  // GET USER BY ID
   static async getUserById(req: Request, res: Response) {
     try {
       const { id } = req.params as { id: string };
@@ -37,6 +39,7 @@ class UserController {
     }
   }
 
+  // CREATE NEW USER
   static async createUser(req: Request, res: Response) {
     try {
       const newUser = await userService.create(req.body as CreateUserDto);
@@ -48,6 +51,7 @@ class UserController {
     }
   }
 
+  // UPDATE USER
   static async updateUser(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
@@ -69,6 +73,7 @@ class UserController {
     }
   }
 
+  // DELETE USER
   static async deleteUser(req: Request, res: Response) {
     try {
       const userId = req.user!.id;
