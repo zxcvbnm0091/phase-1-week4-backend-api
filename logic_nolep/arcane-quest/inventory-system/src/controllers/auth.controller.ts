@@ -5,6 +5,7 @@ import type { JWTPayload } from "../types";
 import { sendTokenResponse } from "../utils/JWTToken";
 
 class AuthController {
+  // LOGIN
   static async login(req: Request, res: Response) {
     try {
       const user = await authService.login(req.body as LoginDto);
@@ -23,7 +24,10 @@ class AuthController {
     }
   }
 
+  // REGISTER
   static async register(req: Request, res: Response) {
+    console.log("Register hit");
+    console.log("req body: ", req.body);
     try {
       const user = await authService.register(req.body as RegisterDto);
 
@@ -39,6 +43,7 @@ class AuthController {
     }
   }
 
+  // LOGOUT
   static async logout(req: Request, res: Response) {
     res.clearCookie("token", {
       httpOnly: true,
