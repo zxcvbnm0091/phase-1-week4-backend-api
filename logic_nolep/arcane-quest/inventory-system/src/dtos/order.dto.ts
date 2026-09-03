@@ -11,10 +11,8 @@ export const OrderSchema = z.object({
 
 export const CreateOrderSchema = OrderSchema.pick({
   status: true,
-  totalPrice: true,
   customerName: true,
   customerEmail: true,
-  userId: true,
 });
 
 export const UpdateOrderSchema = OrderSchema.pick({

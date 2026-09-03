@@ -3,6 +3,7 @@ import { Prisma } from "../generated/prisma/client";
 import type { CreateProductDto, UpdateProductDto } from "../dtos/product.dto";
 import ApiError from "../utils/ApiError";
 import { status } from "http-status";
+import paginate from "../lib/paginate";
 
 const productSelect = {
   id: true,
@@ -14,12 +15,33 @@ const productSelect = {
   userId: true,
 } satisfies Prisma.ProductSelect;
 
-const getAll = async (userId?: string) => {
-  return await prisma.product.findMany({
-    where: userId ? { userId } : undefined,
-    orderBy: { createdAt: "desc" },
-    select: productSelect,
+const getAll = async (
+  userId?: string,
+  page: number = 1,
+  pageSize: number = 10,
+) => {
+  return await paginate({
+    model: "Product",
+    page,
+    pageSize,
+    where: { userId },
   });
+
+  // const [products, total] = await prisma.$transaction([
+  //   prisma.product.findMany({
+  //     skip: (page - 1) * pageSize,
+  //     take: pageSize,
+  //     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+  //   }),
+  //   prisma.product.count(),
+  // ]);
+
+  // return {
+  //   data: products,
+  //   total,
+  //   page,
+  //   totalPage: Math.ceil(total / pageSize),
+  // };
 };
 
 const getById = async (productId: string) => {

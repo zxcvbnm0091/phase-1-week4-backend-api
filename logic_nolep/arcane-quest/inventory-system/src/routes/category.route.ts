@@ -5,26 +5,43 @@ import {
   CreateCategorySchema,
   UpdateCategorySchema,
 } from "../dtos/category.dto";
-import { protect } from "../middlewares/auth.middleware";
+import passport from "../config/passport";
+import { authorizeRoles } from "../middlewares/auth.middleware";
+
 const router = express.Router();
 
-router.get("/", protect, categoryController.getAllCategory);
-router.get("/:id", protect, categoryController.getCategoryById);
+router.get(
+  "/",
+  passport.authenticate("jwt", { session: false }),
+  categoryController.getAllCategory,
+);
+router.get(
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
+  categoryController.getCategoryById,
+);
 
 router.post(
   "/",
-  protect,
+  passport.authenticate("jwt", { session: false }),
+  authorizeRoles("ADMIN"),
   validate(CreateCategorySchema),
   categoryController.createCategory,
 );
 
 router.patch(
   "/:id",
-  protect,
+  passport.authenticate("jwt", { session: false }),
+  authorizeRoles("ADMIN"),
   validate(UpdateCategorySchema),
   categoryController.updateCategory,
 );
 
-router.post("/delete/:id", protect, categoryController.deleteCategory);
+router.delete(
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
+  authorizeRoles("ADMIN"),
+  categoryController.deleteCategory,
+);
 
 export default router;

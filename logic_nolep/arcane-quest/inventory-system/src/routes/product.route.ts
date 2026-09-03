@@ -2,27 +2,38 @@ import express from "express";
 import productController from "../controllers/product.controller";
 import validate from "../middlewares/validate";
 import { CreateProductSchema, UpdateProductSchema } from "../dtos/product.dto";
-import { protect } from "../middlewares/auth.middleware";
-
+import passport from "../config/passport";
 const router = express.Router();
 
-router.get("/all", protect, productController.getAllProduct);
-router.get("/:id", protect, productController.getProductById);
+router.get(
+  "/all",
+  passport.authenticate("jwt", { session: false }),
+  productController.getAllProduct,
+);
+router.get(
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
+  productController.getProductById,
+);
 
 router.post(
   "/",
-  protect,
+  passport.authenticate("jwt", { session: false }),
   validate(CreateProductSchema),
   productController.createProduct,
 );
 
 router.patch(
   "/:id",
-  protect,
+  passport.authenticate("jwt", { session: false }),
   validate(UpdateProductSchema),
   productController.updateProduct,
 );
 
-router.post("/delete/:id", protect, productController.deleteProduct);
+router.delete(
+  "/:id",
+  passport.authenticate("jwt", { session: false }),
+  productController.deleteProduct,
+);
 
 export default router;

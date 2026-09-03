@@ -6,25 +6,36 @@ import type {
 } from "../dtos/category.dto";
 import ApiError from "../utils/ApiError";
 import { status } from "http-status";
-const getAll = async () => {
-  return await prisma.category.findMany({
-    select: {
-      id: true,
-      name: true,
-    },
+import paginate from "../lib/paginate";
+
+const getAll = async (page: number = 1, pageSize: number = 10) => {
+  return await paginate({
+    model: "Category",
+    page,
+    pageSize,
   });
 };
 
-const getById = async (categoryId: string) => {
-  const category = await prisma.category.findUnique({
+const getById = async (
+  categoryId: string,
+  page: number = 1,
+  pageSize: number = 10,
+) => {
+  return await paginate({
+    model: "Category",
+    page,
+    pageSize,
     where: { id: categoryId },
   });
+  // const category = await prisma.category.findUnique({
+  //   where: { id: categoryId },
+  // });
 
-  if (!category) {
-    throw new ApiError(status.NOT_FOUND, "Category Not Found");
-  }
+  // if (!category) {
+  //   throw new ApiError(status.NOT_FOUND, "Category Not Found");
+  // }
 
-  return category;
+  // return category;
 };
 
 const create = async (dto: CreateCategoryDto) => {

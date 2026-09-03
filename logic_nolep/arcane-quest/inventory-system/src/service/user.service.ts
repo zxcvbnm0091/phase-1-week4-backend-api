@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import type { CreateUserDto, UpdateUserDto } from "../dtos/user.dto";
 import ApiError from "../utils/ApiError";
 import { status } from "http-status";
+import paginate from "../lib/paginate";
 const hash = async (password: string) => {
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash(password, salt);
@@ -11,16 +12,27 @@ const hash = async (password: string) => {
   return passwordHash;
 };
 
-const getAll = async () => {
-  return await prisma.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true,
-    },
+const getAll = async (page: number = 1, pageSize: number = 10) => {
+  return await paginate({
+    model: "User",
+    page,
+    pageSize,
   });
+  // const [users, total] = await prisma.$transaction([
+  //   prisma.user.findMany({
+  //     skip: (page - 1) * pageSize,
+  //     take: pageSize,
+  //     orderBy: { id: "asc" },
+  //   }),
+  //   prisma.user.count(),
+  // ]);
+
+  // return {
+  //   data: users,
+  //   total,
+  //   page,
+  //   totalPages: Math.ceil(total / pageSize),
+  // };
 };
 
 const getById = async (userId: string) => {

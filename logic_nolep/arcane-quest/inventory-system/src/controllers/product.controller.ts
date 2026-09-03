@@ -1,84 +1,74 @@
 import * as productService from "../service/product.service";
 import type { Request, Response } from "express";
 import type { CreateProductDto, UpdateProductDto } from "../dtos/product.dto";
+import catchAsync from "../utils/catchAsync";
+import status from "http-status";
 
 class ProductController {
-  // GET ALL
-  static async getAllProduct(req: Request, res: Response) {
-    try {
-      const products = await productService.getAll();
-      res.status(200).json(products);
-    } catch (error: any) {
-      res.status(error.statusCode ?? 500).json({ error: error.message });
-    }
-  }
+  static getAllProduct = catchAsync(async (req: Request, res: Response) => {
+    const products = await productService.getAll();
 
-  // GET BY ID
-  static async getProductById(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      const product = await productService.getById(id as string);
-      res.status(200).json(product);
-    } catch (error: any) {
-      res.status(error.statusCode ?? 500).json({ error: error.message });
-    }
-  }
+    res.status(status.OK).json({
+      message: "Fetch all product",
+      success: true,
+      data: products,
+    });
+  });
 
-  // GET PRODUCT BY USERID
-  static async getProductsByUser(req: Request, res: Response) {
-    try {
-      const userId = req.params.id || req.user!.id;
-      const product = await productService.getAll(userId as string);
+  static getProductById = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params as { id: string };
 
-      res.status(200).json({
-        message: "Showing product by user",
-        success: true,
-        count: product.length,
-        data: product,
-      });
-    } catch (error: any) {
-      res.status(error.statusCode ?? 500).json({ error: error.message });
-    }
-  }
+    const product = await productService.getById(id);
 
-  // CREATE
-  static async createProduct(req: Request, res: Response) {
-    try {
-      const userId = req.user!.id;
-      const product = await productService.create(
-        req.body as CreateProductDto,
-        userId,
-      );
-      res.status(201).json(product);
-    } catch (error: any) {
-      res.status(error.statusCode ?? 500).json({ error: error.message });
-    }
-  }
+    res.status(status.OK).json({
+      message: `Showing product by id: ${id}`,
+      success: true,
+      data: product,
+    });
+  });
 
-  // UPDATE
-  static async updateProduct(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      const product = await productService.update(
-        id as string,
-        req.body as UpdateProductDto,
-      );
-      res.status(200).json(product);
-    } catch (error: any) {
-      res.status(error.statusCode ?? 500).json({ error: error.message });
-    }
-  }
+  static getProductByUser = catchAsync(async (req: Request, res: Response) => {
+    const userId = req.params.id || req.user!.id;
+    const products = await productService.getAll(userId as string);
 
-  // DELETE
-  static async deleteProduct(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      await productService.remove(id as string);
-      res.status(204).send();
-    } catch (error: any) {
-      res.status(error.statusCode ?? 500).json({ error: error.message });
-    }
-  }
+    res.status(status.OK).json({
+      message: "Showing product by user",
+      success: true,
+      data: products,
+    });
+  });
+
+  static createProduct = catchAsync(async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const data = req.body as CreateProductDto;
+    const product = await productService.create(data, userId);
+
+    res.status(status.CREATED).json({
+      message: "Product created",
+      success: true,
+      data: product,
+    });
+  });
+
+  static updateProduct = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params as { id: string };
+    const data = req.body as UpdateProductDto;
+    const product = await productService.update(id, data);
+
+    res.status(status.OK).json({
+      message: "Product updated",
+      success: true,
+      data: product,
+    });
+  });
+
+  static deleteProduct = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params as { id: string };
+
+    await productService.remove(id);
+
+    res.status(status.NO_CONTENT).send();
+  });
 }
 
 export default ProductController;

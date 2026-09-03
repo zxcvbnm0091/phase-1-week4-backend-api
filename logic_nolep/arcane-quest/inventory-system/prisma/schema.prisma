@@ -25,7 +25,7 @@ enum OrderStatus {
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   name      String
   email     String   @unique
   password  String
@@ -33,15 +33,19 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // define one-to-many relation
   orders   Order[]
   products Product[]
   tokens   Token[]
+
+  // non-clustered index for faster sorting
+  @@index([role, createdAt])
 }
 
 model Token {
-  id          String   @id @default(uuid())
+  id          String   @id @default(cuid())
   token       String   @unique
-  userId      String
+  userId      String   @unique
   type        String
   expires     DateTime
   blacklisted Boolean  @default(false)
@@ -52,14 +56,14 @@ model Token {
 }
 
 model Category {
-  id   String @id @default(uuid())
+  id   String @id @default(cuid())
   name String @unique
 
   products Product[]
 }
 
 model Product {
-  id              String   @id @default(uuid())
+  id              String   @id @default(cuid())
   name            String
   description     String
   price           Decimal  @db.Decimal(10, 2)
@@ -72,10 +76,12 @@ model Product {
   category   Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   user       User        @relation(fields: [userId], references: [id], onDelete: Restrict)
   orderItems OrderItem[]
+
+  @@index([categoryId])
 }
 
 model Order {
-  id            String        @id @default(uuid())
+  id            String        @id @default(cuid())
   status        OrderStatus   @default(PENDING)       
   totalPrice    Decimal       @db.Decimal(10, 2)
   customerName  String
@@ -83,13 +89,16 @@ model Order {
   userId        String
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
-  orderItems OrderItem[]
   
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  
+  orderItems OrderItem[]
+
+  @@index([userId, createdAt])
 }
 
 model OrderItem {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   orderId   String
   productId String
   quantity  Int
@@ -99,4 +108,7 @@ model OrderItem {
 
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
 }

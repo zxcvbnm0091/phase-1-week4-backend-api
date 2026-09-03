@@ -1,58 +1,133 @@
 import * as authService from "../service/auth.service";
 import type { Request, Response } from "express";
 import type { LoginDto, RegisterDto } from "../dtos/auth.dto";
-import type { JWTPayload } from "../types";
-import { sendTokenResponse } from "../utils/JWTToken";
+import type { JWTAccessPayload, JWTRefreshPayload } from "../types";
+import { generateAccessToken, generateRefreshToken } from "../utils/JWTToken";
+import { cookieOptions } from "../utils/cookie";
+
+import catchAsync from "../utils/catchAsync";
+import status from "http-status";
+import config from "../config/config";
+import { prisma } from "../lib/prisma";
 
 class AuthController {
-  // LOGIN
-  static async login(req: Request, res: Response) {
-    try {
-      const user = await authService.login(req.body as LoginDto);
+  static login = catchAsync(async (req: Request, res: Response) => {
+    const user = await authService.login(req.body as LoginDto);
 
-      const payload: JWTPayload = {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      };
+    const accessPayload: JWTAccessPayload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
 
-      sendTokenResponse(payload, 200, res);
-    } catch (error: any) {
-      res.status(error.statusCode ?? 500).json({
-        error: error.message,
-      });
-    }
-  }
+    const refreshPayload: JWTRefreshPayload = {
+      userId: user.id,
+    };
 
-  // REGISTER
-  static async register(req: Request, res: Response) {
-    console.log("Register hit");
-    console.log("req body: ", req.body);
-    try {
-      const user = await authService.register(req.body as RegisterDto);
+    const accessToken = generateAccessToken(accessPayload);
+    const refreshToken = generateRefreshToken(refreshPayload);
 
-      const payload: JWTPayload = {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      };
-
-      sendTokenResponse(payload, 201, res);
-    } catch (error: any) {
-      res.status(error.statusCode ?? 500).json({ error: error.message });
-    }
-  }
-
-  // LOGOUT
-  static async logout(req: Request, res: Response) {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+    await prisma.token.upsert({
+      where: { userId: user.id },
+      update: {
+        token: refreshToken,
+        expires: new Date(Date.now() + config.jwt.refreshExpiresMs),
+        blacklisted: false,
+      },
+      create: {
+        token: refreshToken,
+        userId: user.id,
+        type: "refresh",
+        expires: new Date(Date.now() + config.jwt.refreshExpiresMs),
+      },
     });
 
-    res.status(200).json({ message: "Logged out success", success: true });
-  }
+    res
+      .cookie(
+        "accessToken",
+        accessToken,
+        cookieOptions(config.jwt.accessExpiresMs),
+      )
+      .cookie(
+        "refreshToken",
+        refreshToken,
+        cookieOptions(config.jwt.refreshExpiresMs),
+      )
+      .status(status.OK)
+      .json({
+        message: "Login success",
+        success: true,
+        user: user,
+      });
+  });
+
+  static register = catchAsync(async (req: Request, res: Response) => {
+    const user = await authService.register(req.body as RegisterDto);
+
+    const accessPayload: JWTAccessPayload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const refreshPayload: JWTRefreshPayload = {
+      userId: user.id,
+    };
+
+    const accessToken = generateAccessToken(accessPayload);
+    const refreshToken = generateRefreshToken(refreshPayload);
+
+    res
+      .cookie(
+        "accessToken",
+        accessToken,
+        cookieOptions(config.jwt.accessExpiresMs),
+      )
+      .cookie(
+        "refreshToken",
+        refreshToken,
+        cookieOptions(config.jwt.refreshExpiresMs),
+      )
+      .status(status.OK)
+      .json({
+        message: "Register success",
+        success: true,
+        user: user,
+      });
+  });
+
+  // LOGOUT
+  static logout = catchAsync(async (req: Request, res: Response) => {
+    await authService.logout(req.cookies?.refreshToken);
+
+    res
+      .clearCookie("accessToken", cookieOptions(0))
+      .clearCookie("refreshToken", cookieOptions(0))
+      .status(status.OK)
+      .json({ message: "Logged out success", success: true });
+  });
+
+  static refreshToken = catchAsync(async (req: Request, res: Response) => {
+    const token = req.cookies?.refreshToken;
+
+    const { newRefreshToken, accessPayload } = await authService.refresh(token);
+
+    const newAccessToken = generateAccessToken(accessPayload);
+
+    res
+      .cookie(
+        "accessToken",
+        newAccessToken,
+        cookieOptions(config.jwt.accessExpiresMs),
+      )
+      .cookie(
+        "refreshToken",
+        newRefreshToken,
+        cookieOptions(config.jwt.refreshExpiresMs),
+      )
+      .status(status.OK)
+      .json({ message: "Token refreshed", success: true });
+  });
 }
 
 export default AuthController;
